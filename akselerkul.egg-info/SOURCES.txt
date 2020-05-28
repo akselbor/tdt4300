@@ -3,6 +3,7 @@ setup.py
 akselerkul.egg-info/PKG-INFO
 akselerkul.egg-info/SOURCES.txt
 akselerkul.egg-info/dependency_links.txt
+akselerkul.egg-info/requires.txt
 akselerkul.egg-info/top_level.txt
 tdt4300/__init__.py
 tdt4300/eksamen.py
