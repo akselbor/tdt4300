@@ -1,1 +1,1 @@
-import eksamen
+import .eksamen
