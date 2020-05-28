@@ -1,1 +1,1 @@
-
+from eksamen import *
