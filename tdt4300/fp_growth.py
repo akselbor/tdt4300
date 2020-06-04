@@ -54,7 +54,7 @@ class FPTree:
 
             for k, v in self.elems.items():
                 if v:
-                    dot.edge(f'{hid}:{k}_header', v[-1].id())
+                    dot.edge(f'{hid}:{k}_header', str_id(v[-1]))
 
             for token, nodes in self.elems.items():
                 rev = nodes[::-1]
