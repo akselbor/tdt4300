@@ -1,1 +1,1 @@
-#import .eksamen
+from . import eksamen
