@@ -7,11 +7,11 @@ with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 setuptools.setup(
-    name="akselerkul", # Replace with your own username
+    name="tdt4300", # Replace with your own username
     version="0.0.1",
     author="Aksel Borgen",
     author_email="akselborgen@outlook.com",
-    description="Datagruvedrifteksamen",
+    description="Helper library used for the TDT4300 exam",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/akselbor/tdt4300",
