@@ -1,7 +1,7 @@
 from itertools import count
 
 
-def uid(obj):
+def str_id(obj):
     return str(id(obj))
 
 
