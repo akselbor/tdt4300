@@ -43,6 +43,33 @@ def inject(attr, val, fn):
     return f
 
 
+def formatted_frequent_patterns(frequent_patterns):
+    def inner(self, minsup):
+        transactions = flatten(self.expand())
+        return pd.DataFrame(
+            {
+                'len': len(''.join(sorted(list(pat)))),
+                'Frequent Set': latex(','.join(sorted(pat))),
+                'Support Count': support_count(transactions, frozenset(pat))
+            } for pat in frequent_patterns(self, minsup)
+        ).sort_values(['len', 'Frequent Set']).drop(columns=['len']).reset_index(drop=True)._repr_html_()
+    return inner
+
+
+def formatted_step_through(step_through):
+    def inner(self, minsup):
+        transactions = flatten(self.expand())
+        return pd.DataFrame(
+            {
+                'Item': '-' if not i else latex(', '.join(str(item) for item in i)),
+                'Conditional Base Pattern': '-' if not cbp else latex(', '.join('\\{' + ', '.join(pat) + f': {count}' + '\\}' for (pat, count) in cbp)),
+                'Conditional FP-Tree': '-' if not cfp else latex(', '.join(' \\langle ' + ', '.join(f'{pat}: {c}' for pat, c in branch) + ' \\rangle ' for branch in cfp)),
+                'Frequent Patterns Generated': '-' if not pats else latex(', '.join('\\{' + ', '.join(pat) + f': {support_count(transactions, frozenset(pat))}' + '\\}' for pat in pats)),
+            } for (i, cbp, cfp, pats) in step_through(self, minsup)._repr_html_()
+        )
+    return inner
+
+
 class FPTree:
     """A trie with additional metadata to enable efficient creation of frequent itemsets."""
     # These enable the pretty graph drawings in Jupyter. The implementation of `fptree_dot`
@@ -250,33 +277,6 @@ class FPTree:
                 new = prefix + (token,)
                 yield new
                 yield from self.cond(token).frequent_patterns(minsup, prefix=new)
-
-
-def formatted_frequent_patterns(frequent_patterns):
-    def inner(self, minsup):
-        transactions = flatten(self.expand())
-        return pd.DataFrame(
-            {
-                'len': len(''.join(sorted(list(pat)))),
-                'Frequent Set': latex(','.join(sorted(pat))),
-                'Support Count': support_count(transactions, frozenset(pat))
-            } for pat in frequent_patterns(self, minsup)
-        ).sort_values(['len', 'Frequent Set']).drop(columns=['len']).reset_index(drop=True)._repr_html_()
-    return inner
-
-
-def formatted_step_through(step_through):
-    def inner(self, minsup):
-        transactions = flatten(self.expand())
-        return pd.DataFrame(
-            {
-                'Item': '-' if not i else latex(', '.join(str(item) for item in i)),
-                'Conditional Base Pattern': '-' if not cbp else latex(', '.join('\\{' + ', '.join(pat) + f': {count}' + '\\}' for (pat, count) in cbp)),
-                'Conditional FP-Tree': '-' if not cfp else latex(', '.join(' \\langle ' + ', '.join(f'{pat}: {c}' for pat, c in branch) + ' \\rangle ' for branch in cfp)),
-                'Frequent Patterns Generated': '-' if not pats else latex(', '.join('\\{' + ', '.join(pat) + f': {support_count(transactions, frozenset(pat))}' + '\\}' for pat in pats)),
-            } for (i, cbp, cfp, pats) in step_through(self, minsup)._repr_html_()
-        )
-    return inner
 
 
 def latex(xs):
