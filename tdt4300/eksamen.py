@@ -19,52 +19,6 @@ def flatten(xs):
     return [x for x, count in xs for _ in range(count)]
 
 
-def apriori_fkfk(transactions, minsup, prev=[], dot=None):
-    """This is horrible"""
-    dot = dot or graphviz.Digraph(graph_attr={'ordering': 'out'})
-    def ident(items): return ' '.join(items)
-    # Prev is a list of frozensets
-    if not prev:
-        layer = sorted(frozenset([x for xs in transactions for x in xs]))
-        root = str(uid())
-        dot.node(root, label='<<I>{}</I>>')
-        for node in layer:
-            dot.edge(root, node)
-            sup = sigma(transactions, frozenset({node}))
-            if sup >= minsup:
-                dot.node(node, label=f'{node}\n{sup}')
-            else:
-                dot.node(
-                    node, label=f'<<S>{node}</S><BR/>{sup}>', shape='none')
-
-        apriori_fkfk(transactions, minsup, [[item] for item in layer if sigma(
-            transactions, frozenset({item})) >= minsup], dot)
-        return dot
-
-    current = []
-    for (a, b) in combinations(prev, r=2):
-        if a[:-1] != b[:-1]:
-            continue
-
-        new = sorted(a + b[-1:])
-        identifier = ident(new)
-        sup = sigma(transactions, frozenset(new))
-
-        if sup >= minsup:
-            current.append(new)
-            dot.node(identifier, label=f'{identifier}\n{sup}')
-        else:
-            dot.node(
-                identifier, label=f'<<S>{identifier}</S><BR/>{sup}>', shape='none')
-
-        dot.edge(ident(a), identifier)
-        dot.edge(ident(b), identifier)
-
-    if current:
-        apriori_fkfk(transactions, minsup, current, dot)
-    return dot
-
-
 def entropy(samples, as_str=False):
     uniques, counts = np.unique(samples[:, -1], return_counts=True)
     N = len(samples)
