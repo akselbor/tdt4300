@@ -1,10 +1,6 @@
 import pandas as pd
-import numpy as np
 import graphviz
-import matplotlib.pyplot as plt
-from itertools import combinations, count, product, cycle
 from collections import OrderedDict
-from disjoint_set import DisjointSet
 from .stats import support, support_count, confidence
 from functools import wraps
 
@@ -15,17 +11,6 @@ class GeneratorWrapper:
 
     def __iter__(self):
         return self.gen.__iter__()
-
-
-def inject_bound_method_to_generator(method_name, val):
-    def decorate(function):
-        @wraps(function)
-        def inner(*args, **kwargs):
-            wrapper = GeneratorWrapper(function(*args, **kwargs))
-            setattr(wrapper, method_name, val.__get__(wrapper))
-            return wrapper
-        return inner
-    return decorate
 
 
 def inject_repr_html(val):
@@ -48,11 +33,8 @@ def flatten(xs):
     return [x for x, count in xs for _ in range(count)]
 
 
-def inject(attr, val, fn):
-    f = fn
-    setattr(f, attr, val)
-    setattr
-    return f
+def latex(xs):
+    return f'${xs}$'
 
 
 def formatted_frequent_patterns(args):
@@ -117,7 +99,7 @@ class FPTree:
                 if v:
                     dot.edge(f'{hid}:{k}_header', str_id(v[-1]))
 
-            for token, nodes in self.elems.items():
+            for _, nodes in self.elems.items():
                 rev = nodes[::-1]
                 for (a, b) in zip(rev, rev[1:]):
                     dot.edge(str_id(a), str_id(b))
@@ -287,47 +269,3 @@ class FPTree:
                 new = prefix + (token,)
                 yield new
                 yield from self.cond(token).frequent_patterns(minsup, prefix=new)
-
-
-def latex(xs):
-    return f'${xs}$'
-
-
-class PrettyFPTree:
-    def _repr_svg_(self): return self.root._repr_svg_()
-
-    def __init__(self, transactions, minsup):
-        self.root = FPTree.build_from(transactions, minsup)
-
-    def frequent_patterns(self, minsup):
-        root = self.root
-        transactions = flatten(root.expand())
-        return pd.DataFrame(
-            {
-                'len': len(''.join(sorted(list(pat)))),
-                'Frequent Set': latex(','.join(sorted(pat))),
-                'Support Count': support_count(transactions, frozenset(pat))
-            } for pat in root.frequent_patterns(minsup)
-        ).sort_values(['len', 'Frequent Set']).drop(columns=['len']).reset_index(drop=True)
-
-    def step_through(self, minsup):
-        root = self.root
-        transactions = flatten(root.expand())
-        return pd.DataFrame(
-            {
-                'Item': '-' if not i else latex(', '.join(str(item) for item in i)),
-                'Conditional Base Pattern': '-' if not cbp else latex(', '.join('\\{' + ', '.join(pat) + f': {count}' + '\\}' for (pat, count) in cbp)),
-                'Conditional FP-Tree': '-' if not cfp else latex(', '.join(' \\langle ' + ', '.join(f'{pat}: {c}' for pat, c in branch) + ' \\rangle ' for branch in cfp)),
-                'Frequent Patterns Generated': '-' if not pats else latex(', '.join('\\{' + ', '.join(pat) + f': {support_count(transactions, frozenset(pat))}' + '\\}' for pat in pats)),
-            } for (i, cbp, cfp, pats) in root.step_through(minsup)
-        )
-
-
-def fp_growth(transactions, minsup, display_tree=True, display_steps=True, display_fp=False):
-    root = PrettyFPTree(transactions, minsup)
-    if display_tree:
-        display(root)
-    if display_steps:
-        display(root.step_through(minsup))
-    if display_fp:
-        display(root.frequent_patterns(minsup))
