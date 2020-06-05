@@ -32,7 +32,7 @@ def inject_repr_html(val):
     def decorate(function):
         @wraps(function)
         def inner(self, minsup, *args, **kwargs):
-            wrapper = GeneratorWrapper(function(self, minsup))
+            wrapper = GeneratorWrapper(function(self, minsup, *args, **kwargs))
             setattr(wrapper, '_repr_html_',
                     val.__get__((wrapper, self, minsup)))
             return wrapper
