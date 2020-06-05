@@ -31,7 +31,7 @@ def inject_bound_method_to_generator(method_name, val):
 def inject_repr_html(val):
     def decorate(function):
         @wraps(function)
-        def inner(self, minsup):
+        def inner(self, minsup, *args, **kwargs):
             wrapper = GeneratorWrapper(function(self, minsup))
             setattr(wrapper, '_repr_html_',
                     val.__get__((wrapper, self, minsup)))
