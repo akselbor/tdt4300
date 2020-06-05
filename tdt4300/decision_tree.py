@@ -1,10 +1,5 @@
-import pandas as pd
 import numpy as np
 import graphviz
-import matplotlib.pyplot as plt
-from itertools import combinations, count, product, cycle
-from collections import OrderedDict
-from disjoint_set import DisjointSet
 from .uid import inc_id
 
 
