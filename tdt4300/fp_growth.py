@@ -6,6 +6,26 @@ from itertools import combinations, count, product, cycle
 from collections import OrderedDict
 from disjoint_set import DisjointSet
 from .stats import support, support_count, confidence
+from functools import wraps
+
+
+class GeneratorWrapper:
+    def __init__(self, gen):
+        self.gen = gen
+
+    def __iter__(self):
+        return self.gen.__iter__()
+
+
+def inject_bound_method_to_generator(method_name, val):
+    def decorate(function):
+        @wraps(function)
+        def inner(*args, **kwargs):
+            wrapper = GeneratorWrapper(function(*args, **kwargs))
+            setattr(wrapper, method_name, val.__get__(wrapper))
+            return wrapper
+        return inner
+    return decorate
 
 
 def str_id(x):
@@ -16,7 +36,11 @@ def flatten(xs):
     return [x for x, count in xs for _ in range(count)]
 
 
-def ident(s): return ''.join(sorted(list(s)))
+def inject(attr, val, fn):
+    f = fn
+    setattr(f, attr, val)
+    setattr
+    return f
 
 
 class FPTree:
@@ -212,18 +236,47 @@ class FPTree:
             for tok in reversed(list(cfp.elems)):
                 yield from cfp._step_through(tok, minsup, prefix)
 
+    @inject_bound_method_to_generator('_repr_html_', formatted_step_through)
     def step_through(self, minsup):
         for token in reversed(self.elems):
             if self.count(token) >= minsup:
                 yield (None, None, None, [token])
                 yield from self._step_through(token, minsup)
 
+    @inject_bound_method_to_generator('_repr_html_', formatted_frequent_patterns)
     def frequent_patterns(self, minsup, prefix=tuple()):
         for token in reversed(self.elems):
             if self.count(token) >= minsup:
                 new = prefix + (token,)
                 yield new
                 yield from self.cond(token).frequent_patterns(minsup, prefix=new)
+
+
+def formatted_frequent_patterns(frequent_patterns):
+    def inner(self, minsup):
+        transactions = flatten(self.expand())
+        return pd.DataFrame(
+            {
+                'len': len(''.join(sorted(list(pat)))),
+                'Frequent Set': latex(','.join(sorted(pat))),
+                'Support Count': support_count(transactions, frozenset(pat))
+            } for pat in frequent_patterns(self, minsup)
+        ).sort_values(['len', 'Frequent Set']).drop(columns=['len']).reset_index(drop=True)._repr_html_()
+    return inner
+
+
+def formatted_step_through(step_through):
+    def inner(self, minsup):
+        transactions = flatten(self.expand())
+        return pd.DataFrame(
+            {
+                'Item': '-' if not i else latex(', '.join(str(item) for item in i)),
+                'Conditional Base Pattern': '-' if not cbp else latex(', '.join('\\{' + ', '.join(pat) + f': {count}' + '\\}' for (pat, count) in cbp)),
+                'Conditional FP-Tree': '-' if not cfp else latex(', '.join(' \\langle ' + ', '.join(f'{pat}: {c}' for pat, c in branch) + ' \\rangle ' for branch in cfp)),
+                'Frequent Patterns Generated': '-' if not pats else latex(', '.join('\\{' + ', '.join(pat) + f': {support_count(transactions, frozenset(pat))}' + '\\}' for pat in pats)),
+            } for (i, cbp, cfp, pats) in step_through(self, minsup)._repr_html_()
+        )
+    return inner
 
 
 def latex(xs):
