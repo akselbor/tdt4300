@@ -10,6 +10,7 @@ from .uid import uid
 
 
 def apriori(transactions, minsup, candidate_generation='fkfk'):
+    """Constructs a graphviz graph showing the apriori algorithm using a particular candidate generation method."""
     if candidate_generation != 'fkfk':
         raise ValueError(
             f"Unknown candidate generation '{candidate_generation}'")
@@ -20,14 +21,10 @@ def apriori(transactions, minsup, candidate_generation='fkfk'):
     for node in one_itemsets:
         dot.edge('ROOT', node)
         sup = support_count(transactions, {node})
-        if sup >= minsup:
-            dot.node(node, label=f'{node}\n{sup}')
-        else:
-            dot.node(
-                node,
-                label=f'<<S>{node}</S><BR/>{sup}>',
-                shape='none'
-            )
+        # We will use strike-through on the label of pruned itemsets, and no shape (node border).
+        label = f'{node}\n{sup}' if sup >= minsup else f'<<S>{node}</S><BR/>{sup}>'
+        shape = 'oval' if sup >= minsup else 'none'
+        dot.node(node, label=label, shape=shape)
 
     return apriori_fkfk(transactions, minsup, [[item] for item in one_itemsets if support_count(
         transactions, {item}) >= minsup], dot)
