@@ -1,12 +1,6 @@
-import pandas as pd
-import numpy as np
 import graphviz
-import matplotlib.pyplot as plt
-from itertools import combinations, count, product, cycle
-from collections import OrderedDict
-from disjoint_set import DisjointSet
+from itertools import combinations
 from .stats import support_count
-from .uid import uid
 
 
 def apriori(transactions, minsup, candidate_generation='fkfk'):

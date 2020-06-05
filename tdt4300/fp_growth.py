@@ -1,8 +1,9 @@
 import pandas as pd
 import graphviz
 from collections import OrderedDict
-from .stats import support, support_count, confidence
 from functools import wraps
+from .stats import support, support_count
+from .uid import str_id
 
 
 class GeneratorWrapper:
